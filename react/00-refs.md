@@ -4,11 +4,21 @@
 
 When you want a component to `remember` some information, but you don’t want that information to trigger `new` `renders`, you can use a `ref`.
 
+the `ref` itself is a regular JavaScript object
+
 **`When to use Refs:`**
 
-- Managing focus, text selection and media playback.
-- Triggering impretive animations.
-- Integrating with third-party DOM library.
+You will use a `ref` when your component needs to `“step outside”` React and communicate with external APIs—often a browser API that won’t impact the appearance of the component
+
+- Storing `TimeoutIDs`.
+- Storing and manipulating DOM elements.
+- Storing other objects that aren’t necessary to calculate the JSX.
+
+**`Best practice for refs:`**
+
+- `Treat refs as an escape hatch.` Refs are useful when you work with external systems or browser APIs. If much of your application logic and data flow relies on refs, you might want to rethink your approach.
+
+- `Don’t read or write ref.current during rendering.` If some information is needed during rendering, use state instead. Since React doesn’t know when ref.current changes, even reading it while rendering makes your component’s behavior difficult to predict. (The only exception to this is code like if (!ref.current) ref.current = new Thing() which only sets the ref once during the first render.)
 
 **`How to add Refs:`**
 
