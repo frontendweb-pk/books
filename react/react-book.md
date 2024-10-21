@@ -181,3 +181,45 @@ In React, side effect usually belong inside `event handlers`.
 `Event handlers` are functions that React runs when you perform some action -- for example, when you click a button. Even though event handlers are defined inside your component, they don’t run during rendering! So event handlers don’t need to be `pure`.
 
 If you’ve exhausted all other options and can’t find the right event handler for your side effect, you can still attach it to your returned JSX with a `useEffect` call in your component. This tells React to execute it later, after rendering, when side effects are allowed. However, this approach should be your `last resort`.
+
+<br />
+
+**`Events:`**
+
+React lets you add event handlers to your JSX. Event handlers are your own functions that will be triggered in response to interactions like clicking, hovering, focusing form inputs, and so on.
+
+`Adding event handlers:`
+
+To add an event handler, you will first define a function and then pass it as a prop to the appropriate JSX tag.
+
+`Example:`
+
+```ts
+export default function Button() {
+  // step-1: Declare a function called handleClick
+  function handleClick() {
+    // step-2: Implement logic inside function
+    alert("You clicked me!");
+  } // this function is called an event handler
+
+  // step-3: Add onClick={handleClick} to the <button> JSX
+  return <button onClick={handleClick}>Click me</button>;
+}
+
+// event handlers defined inside the components.
+// event handlers start with handle, followed by the name of the event
+// You’ll often see onClick={handleClick}, onMouseEnter={handleMouseEnter}, and so on.
+
+// Alternatively, you can define an event handler inline in the JSX:
+export default function IconButton() {
+  return (
+    <button
+      onClick={function handleClick() {
+        alert("You clicked me!");
+      }}
+    >
+      Click me
+    </button>
+  );
+}
+```
