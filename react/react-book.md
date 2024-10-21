@@ -121,3 +121,63 @@ There are three kind of inputs that you can read while rendering.
 - `Context`
 
 You shold always treat these inputs a read-only.
+
+When you want to change something in response to user input, you should set state instead of writing to a variable.
+
+`Note:`
+
+You should never change preexisting variables or objects while your component is rendering.
+
+<br />
+
+`Stri Mode:`
+
+- It calls each component's function twice during development.
+- By calling the component functions twice, Strict Mode helps find components that break these rules.
+- It has no effect in production, so it won't shlow down the app for your users.
+
+<br />
+
+**`Local mutation:`**
+
+the problem was that the component changed a preexisting variable while rendering. This is often called a `“mutation”` to make it sound a bit scarier.
+
+Pure functions don’t `mutate` variables `outside` of the function’s `scope` or objects that were created before the call—that makes them `impure!`.
+
+However, it’s completely fine to change variables and objects that you’ve just created while rendering
+
+`Example:`
+
+```ts
+function Todo({ text }) {
+  return <p>{text}</p>;
+}
+
+export default function TodoList() {
+  const todos = [];
+  for (let i = 0; i <= 10; i++) {
+    todos.push(<Todo text={n} key={n} />);
+  }
+  return todos;
+}
+```
+
+If the `todos` variable or the [] array were created outside the `TodoList` function, this would be a huge problem! You would be changing a preexisting object by pushing items into that array.
+
+it’s fine because you’ve created them during the same render, inside `TodoList`. No code outside of the `TodoList. This is called `“local mutation”`—it’s like your component’s little secret.
+
+<br />
+
+**`Adding side effect:`**
+
+Functional programming relies havily on purity, at some point, somewhere, something has to change.
+
+That's kind of point in the programming! there changes -- updating the `screen`, starting an `animation`, chaning the `data` - are called `side effects.`
+
+They’re things that happen `“on the side”`, not during `rendering`.
+
+In React, side effect usually belong inside `event handlers`.
+
+`Event handlers` are functions that React runs when you perform some action -- for example, when you click a button. Even though event handlers are defined inside your component, they don’t run during rendering! So event handlers don’t need to be `pure`.
+
+If you’ve exhausted all other options and can’t find the right event handler for your side effect, you can still attach it to your returned JSX with a `useEffect` call in your component. This tells React to execute it later, after rendering, when side effects are allowed. However, this approach should be your `last resort`.
