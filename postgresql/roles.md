@@ -52,9 +52,21 @@ To allow the login access to a role in the PostgreSQL server, you need to add th
 
 ```sql
 -- syntax
-CREATE ROLE role_name WITH options;
+CREATE ROLE role_name
+WITH -- optional
+options;
 
--- WITH is optional
+-- options
+CREATE ROLE role_name WITH
+    LOGIN -- Allow the role to loing in to db,
+    PASSWORD 'my_password' -- Set password for role,
+    VALID UNTIL '2025-12-31' -- Set expiration date.,
+    INHERIT -- Inherit privilege from other roles.,
+    CREATEDB -- Allow the role to create new db. ,
+    CREATEROLE -- Allow the role to create new role,
+    SUPERUSER -- Grants the role all privilege.
+    CONNECTION LIMIT connection_count;
+
 ```
 
 `Create login role:`
@@ -115,3 +127,22 @@ VALID UNTIL '2026-01-01'; -- valid only till '1 jan 26'
 ```
 
 After one second tick in 2026, the password of pkumar is no longer valid.
+
+**`Create role with connection limit:`**
+
+To specify the number of concurrent connections a role can make, you use the `CONNECTION LIMIT` attribute:
+
+```sql
+-- syntax
+CONNECTION LIMIT connection_count;
+
+-- example
+CREATE ROLE pkumar
+WITH -- optional
+CREATEDB -- create db privilege
+LOGIN
+PASSWORD '12345' -- user defined password
+VALID UNTIL '2026-01-01' -- valid until 2026
+CONNECTION LIMIT 100 -- 100 concurrent connections
+;
+```
