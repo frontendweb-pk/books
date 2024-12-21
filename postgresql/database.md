@@ -343,4 +343,101 @@ ALTER DATABASE bots
 RENAME TO robots;
 ```
 
-##
+## Copy database within the same server
+
+You want to copy a PostgreSQL database wihin a database server for testing purpose.
+
+```sql
+-- syntax
+CREATE DATABASE targetDb
+WITH TEMPLATE sourceDb;
+
+-- example
+CREATE DATABASE dvdrental_test
+WITH TEMPLATE dvdrental;
+```
+
+**`Copy database from one server to another:`**
+
+```sql
+-- Step-1: dump the source database into a file.
+pg_dump -U postgres -d sourcedb -f sourcedb.sql
+
+-- Step-2: create new database
+CREATE DATABSE demo;
+
+-- Step-3: restore the dump file
+psql -U postgres -d demo -f sourcedb.sql
+```
+
+**`How to Get Sizes of Database Objects in PostgreSQ`**
+
+- Use the `pg_size_pretty()` function to format the size.
+- Use the `pg_relation_size()` function to get the size of a table.
+- Use the `pg_total_relation_size()` function to get the total size of a table.
+- Use the `pg_database_size()` function to get the size of a database.
+- Use the `pg_indexes_size()` function to get the size of an index.
+- Use the `pg_total_index_size()` function to get the size of all indexes on a table.
+- Use the `pg_tablespace_size()` function to get the size of a tablespace.
+- Use the `pg_column_size()` function to obtain the size of a column of a specific type.
+
+`Examples:`
+
+```sql
+-- Getting table sizes:
+select pg_relation_size('actor');
+
+-- he pg_size_pretty() function formats a number using bytes, kB, MB, GB, or TB appropriately. For example:
+SELECT
+    pg_size_pretty (pg_relation_size('actor')) size;
+
+-- To get the total size of a table
+SELECT
+    pg_size_pretty (
+        pg_total_relation_size ('actor')
+    ) size;
+
+
+-- the following query returns the top 5 biggest tables in the dvdrental database
+SELECT
+    relname AS "relation",
+    pg_size_pretty (
+        pg_total_relation_size (C .oid)
+    ) AS "total_size"
+FROM
+    pg_class C
+LEFT JOIN pg_namespace N ON (N.oid = C .relnamespace)
+WHERE
+    nspname NOT IN (
+        'pg_catalog',
+        'information_schema'
+    )
+AND C .relkind <> 'i'
+AND nspname !~ '^pg_toast'
+ORDER BY
+    pg_total_relation_size (C .oid) DESC
+LIMIT 5;
+
+
+-- Getting database size
+SELECT
+    pg_size_pretty (
+        pg_database_size ('dvdrental')
+    ) size;
+
+-- Getting index sizes
+SELECT
+    pg_size_pretty (pg_indexes_size('actor')) size;
+
+-- Getting tablespace sizes
+SELECT
+    pg_size_pretty (
+        pg_tablespace_size ('pg_default')
+    ) size;
+
+-- Getting PostgreSQL value sizes
+SELECT
+  pg_column_size(5 :: smallint) smallint_size,
+  pg_column_size(5 :: int) int_size,
+  pg_column_size(5 :: bigint) bigint_size;
+```
