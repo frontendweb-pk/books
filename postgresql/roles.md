@@ -146,3 +146,59 @@ VALID UNTIL '2026-01-01' -- valid until 2026
 CONNECTION LIMIT 100 -- 100 concurrent connections
 ;
 ```
+
+## GRANT
+
+The `GRANT` statement to grant privileges on database object to a role.
+
+After creating a `role` with the `LOGIN` attribute, the role can `log in` to the `PostgreSQL` database server.
+
+However, it cannot do anything to the database objects like `tables`, `views`, `functions`, etc. For example, the `role` cannot select data from a `table` or `execute` a specific `function`.
+
+To allow a `role` to interact with `database` objects, you need to `grant` privileges on the database objects to the role using the `GRANT` statement.
+
+```sql
+-- syntax
+GRANT privilege_list | ALL
+ON table_name
+ON role_name;
+```
+
+- `Object Privileges:`
+
+  - `SELECT:` Read data from a table, view, or foreign table.
+  - `INSERT:` Insert new rows into a table.
+  - `UPDATE:` Modify existing rows in a table.
+  - `DELETE:` Delete rows from a table.
+  - `TRUNCATE:` Remove all rows from a table.
+  - `REFERENCES:` Create foreign key constraints referencing the table.
+  - `TRIGGER:` Create triggers on the table.
+  - `CREATE:` Create objects within the schema (e.g., tables, views, functions).
+  - `CONNECT:` Connect to the database.
+  - `TEMPORARY:` Create temporary tables.
+  - `EXECUTE:` Execute functions.
+  - `USAGE:` Grant the right to use a schema, sequence, language, or type.
+  - `SET:` Set session parameters.
+  - `ALTER:` SYSTEM: Alter system-wide parameters.
+  - `MAINTAIN:` Perform maintenance operations on the object.
+  - `USAGE:`(on a column): Use the column in expressions (e.g., in WHERE clauses).
+
+- `Schema Privileges:`
+
+  - `USAGE:` Use the schema and its objects.
+  - `CREATE:` Create objects within the schema.
+
+- `Database Privileges:`
+
+  - `CONNECT:` Connect to the database.
+  - `TEMPORARY:` Create temporary tables within the database.
+  - `CREATE:` Create objects within the database.
+
+- `Role Privileges:`
+
+  The name of the `role` itself: `Grants` membership in the role, allowing the grantee to inherit privileges from the role.
+
+- `Other Privileges:`
+
+  - `ALL PRIVILEGES:` Grant all available privileges for the object type.
+  - `WITH GRANT OPTION:` Allow the grantee to further grant the privilege to other roles.
