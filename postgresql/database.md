@@ -271,3 +271,76 @@ RESET ALL; -- reset all
 -- exmple reset work_mem only
 RESET work_mem;
 ```
+
+**`Examples:`**
+
+```sql
+-- create database
+CREATE DATABASE testdb2;
+
+-- rename to testhrdb
+ALTER DATABASE testdb2
+RENAME TO testhrdb;
+
+-- change owner postgres to hr
+ALTER DATABASE testhrdb
+OWNER TO hr;
+
+-- change the default tablespace of the testhrdbfrom pg_default to hr_default
+ALTER DATABASE testhrdb
+SET TABLESPACE hr_default;
+
+-- set escape_string_warning configuration variable to off by using the following statement:
+ALTER DATABASE testhrdb
+SET escape_string_warning = off;
+```
+
+## Drop database
+
+The `DROP DATABASE` statement deletes a database from a `PostgreSQL` server.
+
+```sql
+-- syntax
+DROP DATABASE [IF EXISTS] database_name
+[WITH (FORCE)]
+
+-- The FORCE option will attempt to terminate all existing connections to the target database.
+```
+
+`NOTE:`
+
+- The `DROP DATABASE` statement deletes the database from both `catalog entry` and `data directory`.
+
+- Since `PostgreSQL` does not allow you to `roll back` this operation, you should use it with caution.
+
+- To execute the` DROP DATABASE` statement, you need to be the database `owner`.
+
+`Examples:`
+
+```sql
+-- Create some database
+CREATE DATABASE hr;
+CREATE DATABASE test;
+
+-- Drop the hr database
+DROP DATABASE hr;
+
+-- Removing a non-existing database example (IF EXISTS WILL CHECK THE DATABASE THEN DELETE IF EXISTS OTHERWISE DO NOTHING)
+DROP DATABASE IF EXISTS non_existing_database;
+
+-- Drop a database that has active connections example
+DROP DATABASE test WITH (FORCE)
+```
+
+## Rename database
+
+```sql
+-- Create database bots
+CREATE DATABASE bots;
+
+-- RENAME TO robots
+ALTER DATABASE bots
+RENAME TO robots;
+```
+
+##
