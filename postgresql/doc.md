@@ -442,7 +442,7 @@ SELECT
   pg_column_size(5 :: bigint) bigint_size;
 ```
 
-# PostgreSQl Schema
+# PostgreSQL Schema
 
 In PostgreSQL, a schema is a named collection of database object, including
 
@@ -538,17 +538,17 @@ If you use the `postgres` user to log in and access `user` table. PostgreSQL wil
 
 The second element referes to the `public` schema as we have seen in the result.
 
-**`Create new schema`**
-
-To create a new schema, you use the CREATE SCHEMA statement:
+`List schema of current database:`
 
 ```sql
-CREATE SCHEMA schema_name;
+-- run this command in psql
+\dn
 ```
 
 **`Add new created schema to the search path:`**
 
 ```sql
+-- suppose you have created new [auth] schema
 SET search_path TO auth, public;
 ```
 
@@ -610,4 +610,116 @@ TO user_name
 -- example
 GRANT CREATE ON SCHEMA auth
 TO pkumar;
+```
+
+`Note:`
+
+By default, every user has the `CREATE` and `USAGE` on the public schema.
+
+## Create schema:
+
+The `CREATE SCHEMA` statement allows you to create a new `schema` in the `current` database.
+
+```sql
+-- syntax
+CREATE SCHEMA [IF NOT EXISTS] schema_name;
+
+-- You can also create schema for a user
+CREATE SCHEMA [IF NOT EXISTS]
+AUTHORIZATION username;
+-- In this case, the schema will have the same name as the username.
+```
+
+`Note:`
+To execute the `CREATE SCHEMA` statement, you must have the `CREATE` privilege in the current database.
+
+`To return all schemas from the current database:`
+
+```sql
+SELECT *
+FROM pg_catalog.pg_namespace
+ORDER BY nspname;
+```
+
+**`Using CREATE SCHEMA statement to create a schema for a user example:`**
+
+First, create a new role with named `pkumar`
+
+```sql
+CREATE ROLE pkumar
+LOGIN
+PASSWORD '12345';
+```
+
+Second, create a schema for `pkumar`.
+
+```sql
+CREATE SCHEMA AUTHORIZATION pkumar;
+-- OR
+CREATE SCHEMA IF NOT EXISTS demo AUTHORIZATION pkumar;
+```
+
+## Alter schema:
+
+The `ALTER SCHEMA` statement allows you to change the definition of a `schema`.
+
+**`Rename schema:`**
+
+```sql
+ALTER SCHEMA schema_name
+RENAME TO new_name;
+```
+
+`Note`
+
+That to execute this statement, you must be the owner of the `schema` and you must have the `CREATE` privilege for the database.
+
+**`Change the owner of schema:`**
+
+```sql
+ALTER SCHEMA schema_name
+OWNER TO { new_owner | CURRENT_USER | SESSION_USER};
+```
+
+`Examples:`
+
+```sql
+-- Rename schema [demo] to [demo1`]
+ALTER SCHEMA demo
+RENAME TO demo1;
+
+-- Change the owner
+ALTER SCHEMA demo
+OWNER TO postgres;
+```
+
+## Drop schema
+
+The `DROP SCHEMA` removes a schema and all of its `objects` from a `database`.
+
+```sql
+-- syntax
+DROP SCHEMA [IF EXISTS] schema_name
+[ CASCADE | RESTRICT ];
+```
+
+- use `CASCADE` to delete schema and all of its objects, and in turn, all objects that depend on those objects.
+- If you want to `delete` `schema only` when it is `empty`, you can use the `RESTRICT` option.
+- By default, the `DROP SCHEMA` uses the `RESTRICT` option.
+
+`Note:`
+
+To execute the` DROP SCHEMA`statement, you must be the `owner` of the schema that you want to drop or a `superuser`.
+
+`Example:`
+
+```sql
+-- drop schema demo
+DROP SCHEMA IF EXISTS demo;
+
+-- drop multiple schema
+DROP SCHEMA IF EXISTS demo, auth, private;
+
+-- drop schema if not empty
+DROP SCHEMA blogs CASCADE;
 ```
