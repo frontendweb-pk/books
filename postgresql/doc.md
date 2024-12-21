@@ -471,6 +471,16 @@ A schema can be thought of as a `container` for `database` objects.
 - A schema belongs to only one database.
 - Two schemas can have different objects that share the same name.
 
+`Access an object in schema:`
+
+```sql
+-- syntax
+schema_name.object_name
+
+-- example
+SELECT * FROM public.users; -- public is schema
+```
+
 `For example:`
 
 You may have `auth` schema that has `user` table and `public` schema which also has the `user` table.
@@ -502,12 +512,102 @@ CREATE TABLE public.table_name(
 )
 ```
 
-`Access an object in schema:`
+**`Schema search path:`**
+
+When you refer to a table name without its schema name. `user` table instead of a fully qualified name such as `public.user` table.
+
+PostgreSQL searches for the table by using the `schema search path`, which is a list of schemas to look in.
+
+PostgreSQL will access the first matching table in the `schema` search path. If there is no match, it will return an error, even if the name exists in another schema in the database.
+
+The first schema in the search path is called the current schema.
+
+```sql
+-- access current schema
+SELECT current_schema(); -- it will return the current schema, default is public
+
+-- To view the current search path
+SHOW search_path; -- RESULT "$user", public
+```
+
+The `"$user"` specifies that the first schema that PostgreSQL will use to search for the object, which has the same name as the current user.
+
+`For cxample:`
+
+If you use the `postgres` user to log in and access `user` table. PostgreSQL will search for the `user` table in the `postgres` schema. if it cannot find any object like that, it continues to look for the object in the `public` schema.
+
+The second element referes to the `public` schema as we have seen in the result.
+
+**`Create new schema`**
+
+To create a new schema, you use the CREATE SCHEMA statement:
+
+```sql
+CREATE SCHEMA schema_name;
+```
+
+**`Add new created schema to the search path:`**
+
+```sql
+SET search_path TO auth, public;
+```
+
+Now, if you create new table named `user` without specifying the schema name, PostgreSQL will put this `user` table into the `auth` schema:
+
+```sql
+CREATE TABLE user(
+  user_id int GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  age int NOT NULL CHECK(age > 0 and age < 100),
+  mobile VARCHAR(10) NOT NULL CHECK(LENGTH(TRIM(mobile))=10)
+)
+
+```
+
+The user table belongs to the `auth` schema.
+
+To access it
+
+```sql
+SELECT * FROM user;
+-- OR
+SELECT * FROM auth.user;
+```
+
+The `public` schema is the second element in the search path
+
+```sql
+-- you can set public
+SET search_path TO public;
+```
+
+The public schema is not a special schema, you can `drop` it too.
+
+**`PostgreSQL schemas and previleges:`**
+
+User can only access objects in the schema that they own (`USAGE previlege`).
+
+To allow users to access the objects in the schema that they do not own, you must grant the `USAGE` previlege of the schema to the users.
 
 ```sql
 -- syntax
-schema_name.object_name
+GRANT ON SCHEMA schema_name
+TO role_name;
 
 -- example
-SELECT * FROM public.users; -- public is schema
+GRANT USAGE ON SCHEMA auth
+TO pkumar;
+```
+
+To allow users to create objects in the schema that they do not own, you need to grant them the `CREATE` privilege of the schema to the users:
+
+```sql
+-- syntax
+GRANT CREATE ON SCHEMA schema_name
+TO user_name
+
+-- example
+GRANT CREATE ON SCHEMA auth
+TO pkumar;
 ```
