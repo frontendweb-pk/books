@@ -441,3 +441,73 @@ SELECT
   pg_column_size(5 :: int) int_size,
   pg_column_size(5 :: bigint) bigint_size;
 ```
+
+# PostgreSQl Schema
+
+In PostgreSQL, a schema is a named collection of database object, including
+
+- Tables
+- Indexes
+- Views
+- Data Types
+- Functions
+- Procedures
+- Operators
+- Sequences
+- Triggers
+- Materialized Views
+- Domains
+- Aggregates
+- Collations
+- Foreign Tables
+
+and many more.
+
+A schema allows you to organize and namespace objects within a database.
+
+A schema can be thought of as a `container` for `database` objects.
+
+- A database can contain one or more schemas.
+- A schema belongs to only one database.
+- Two schemas can have different objects that share the same name.
+
+`For example:`
+
+You may have `auth` schema that has `user` table and `public` schema which also has the `user` table.
+
+```sql
+public.user
+-- Or
+auth.user
+```
+
+`Advantage of using schema:`
+
+- Schemas allow you to organize database objects, tables into logical group to make them more managabale.
+- Schema enable multiple users to use one database without interfering with each other.
+
+`The public schema:`
+
+PostgreSQL autometically creates a schema called `public` for every new database.
+Whatever object you create without specifying the schema name, PostgreSQl will place it into this `public` schema.
+
+```sql
+CREATE TABLE table_name(
+  ...
+)
+
+-- and
+CREATE TABLE public.table_name(
+  ....
+)
+```
+
+`Access an object in schema:`
+
+```sql
+-- syntax
+schema_name.object_name
+
+-- example
+SELECT * FROM public.users; -- public is schema
+```
