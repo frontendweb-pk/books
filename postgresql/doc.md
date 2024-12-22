@@ -723,3 +723,9 @@ DROP SCHEMA IF EXISTS demo, auth, private;
 -- drop schema if not empty
 DROP SCHEMA blogs CASCADE;
 ```
+
+<br />
+
+# Create Role
+
+PostgreSQl uses the concept of `roles` to represent user account. It doesn't use the concept of `users` like other database systems.
