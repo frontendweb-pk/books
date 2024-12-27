@@ -1,3 +1,194 @@
+# RDBMS (What is it?)
+
+An `RDBMS` (Relational Database Management System) is a type of database management system that store data in a structured format using `table` (also known as `relation`).
+
+These `Tables` consist of `rows` and `columns` .
+
+Where,
+
+- `row:` represent a `record`
+- `column:` represent a `data` attribute.
+
+RDBMSs are based on the principles of the `relational model` of data, introduced by `edger F. Codd` in `1970`.
+
+**`Key Characteristics of RDBMS:`**
+
+- `Data organization in tables:`
+
+  Data is organized in `tables(relations)` with `rows(records)` and `columns(attributes)`. each table has `primary key` that uniquely identifies each `row`.
+
+- `Relationships:`
+
+  RDBMS allows defining relationships between different tables using `foreign keys`.
+  A `foreign key` in one table points to the `primary key` of other table.
+
+- `SQL (Structured Query Language):`
+
+  `SQL` is the standard language used to `query, insert, update,` and `delete` data from the `database`. SQL also allows the creation and modification of `database` `schemas` and structures.
+
+- `Data integirty and Constraints:`
+
+  RDBMSs support various data integrity rules, such as `primary keys`, `foreign keys`, `unique constraints`, and `check constraints`, which ensure the accuracy and consistency of data.
+
+- `ACID:`
+
+  RDBMSs support the `ACID` properties `(Atomicity, Consistency, Isolation, Durability)`, which ensure that transactions are processed reliably.
+
+- `Normalization:`
+
+  To reduce `redundancy` and `dependency`, data in RDBMS can be normalized (organized into different tables) according to certain rules `(1NF, 2NF, 3NF, etc.)`.
+
+- `Scalability and Security:`
+
+  RDBMSs provide mechanisms for security `(user roles, access control)` and scalability, allowing them to handle large amounts of data and users.
+
+# Internal architecture of PostgreSQL
+
+# Indexes
+
+An index is a data structure that increases the data retrieval speed by providing a rapid way to locate rows within a table.
+
+```sql
+-- syntax create index (B-Tree)
+CREATE INDEX index_name
+ON table_name(column_name);
+
+-- display all index in the database
+SELECT * FROM pg_indexes WHERE schemaname  !='pg_catalog' AND schemaname  != 'information_schema';
+
+-- display all index in a table
+SELECT * FROM pg_indexes where tablename='users';
+```
+
+**`Types of indexes:`**
+
+### B-Tree index
+
+It is a default index type in PostgreSQL, stand for `balanced tree`.
+B-tree indexes maintain the `sorted values` them efficient for `exact matches` and `range queries`.
+
+```sql
+-- syntax
+CREATE INDEX index_name ON table_name(column_name);
+
+-- example
+CREATE INDEX idx_users_name ON users(name);
+```
+
+**`Key Characteristics:`**
+
+- `Self-balancing:` Ensures that the tree remains balanced, which optimizes search times.
+- `Sorted Data:` Stores keys in a sorted order, making it efficient for queries that require ordering.
+- `Logarithmic Search Time:` B-trees guarantee O(log N) search time, which is much faster than linear search in unsorted data.
+
+**`How does it work:`**
+B-Tree index works by maintaining a `sorted` structure.
+
+Where:
+
+- `leaf nodes:` contain the actual indexed values along with pointers to the corresponding table rows.
+- `Non-leaf nodes:` contain pointers to lower-level nodes (either leaf or other non-leaf nodes)
+
+```sql
+-- how to query B-Tree index
+SELECT * FROM employees WHERE salary BETWEEN 50000 AND 70000;
+```
+
+**`Internals:`**
+
+- `Page Structure:` PostgreSQL's B-Tree index is based on a structure called a `page`, where each page is a `block` of data (usually `8KB` in size). Each page can store a certain number of keys and pointers to child page or data rows.
+
+  **Node Spilliting and Merging:**
+
+  - When an index page becomes full, it splits into `two` pages.
+  - When the number of entries decreases too much, nodes can be `merged`.
+
+  **Efficient updates:**
+
+  When you insert, update and delete rows that affect indexed columns, the B-Tree index
+  adjusts ifself to maintain its balance and sorted order.
+
+**`Multi-column B-Tree index:`**
+
+A B-Tree index can also be created on multiple columns. This is useful for the queries that filter by mutiple columns.
+
+```sql
+-- syntax
+CREATE INDEX index_column_name ON users(multiple_column_name);
+
+-- example
+CREATE INDEX idx_name_salary ON users(name,salary);
+```
+
+**`Partial B-Tree Index:`**
+
+You can create a partial index to index only a subset of rows that meet a specific condition. This is useful when you have many rows, but only a small fraction of them are frequently queried.
+
+```sql
+--example
+CREATE INDEX idx_high_salary ON users (salary) WHERE salary > 100000;
+-- This index will only index users with a salary greater than 100,000.
+```
+
+**`B-Tree Index and Sorting:`**
+
+Since B-Tree indexes store data in sorted order, they can also improve the performance of queries that require sorting.
+
+```sql
+SELECT * FROM employees ORDER BY salary DESC;
+```
+
+**`Real-world Scenarios:`**
+
+- `OLTP (Online Transaction Processing):` B-Tree indexes are commonly used in OLTP systems for efficient retrieval and updates. Since OLTP systems involve a high rate of inserts, updates, and selects, the B-Tree index strikes a good balance between read and write
+  performance.
+
+- `Analytics:` While B-Tree indexes can be useful in analytical queries, more complex queries often benefit from different index types (e.g., hash, GiST, or GIN indexes), depending on the query pattern.
+
+### Hash index
+
+A Hash Index in `PostgreSQL` is a type of `index` that uses a `hash table` to store `pointers` to the rows in the `table` based on a `hash function` applied to the indexed column(s).
+
+Hash indexes directly map the values to hash buckets.
+
+Hash indexes maintain 32-bit hash code created from values of the indexed columns, handled only simple equality comparisions (=).
+
+```sql
+-- syntax
+CREATE INDEX index_name ON table_name USING HASH(column_name);
+
+-- example
+CREATE INDEX idx_users_name ON users  USING HASH (name);
+
+-- how this will optimize queries
+SELECT * FROM users WHERE name='pradeep kumar';
+```
+
+**`Key Characteristics:`**
+
+- `Equality Queries:` Hash indexes are particularly optimized for `equality queries` such as `=`. `WHERE column_name = value`
+
+- `No Ordering:` Hash index do not maintain any order of the indexed values.
+- `Faster Loopkup:` For large datasets with equality-based queries, hash indexes can provide faster lookups then B-Tree indexes.
+- `Collision handling:` Hash indexes handle collisions (where multiple values hash to the same bucket) using techniques like `chaining` and `open addressing`.
+
+**`How hash indexes work:`**
+
+- `Hash Function:` When a value from the indexed column is `inserted` or `queried`, `PostgreSQL` applies a h`ash function` to the `value`, which produces a hash value (a fixed-size binary value).
+- `Hash Buckets:` The hash value is used to determine the `"bucket`" where the data is stored. Each bucket stores a list of rows that have the same hash value.
+- `Direct Lookup:` When a query uses the indexed column with an `equality` condition, PostgreSQL can directly look up the corresponding bucket and retrieve the rows matching that hash value.
+
+## GIN index
+
+GIN indexes are inverted indexes taht are suitable for composite values such as `arrays, JSONB data`,
+and `full-text search`.
+
+### GiST index
+
+### SP-GiST index
+
+### BRIN (Block Range Index) Index
+
 # Database
 
 Database is a collection of related data serves as a container for
@@ -726,6 +917,424 @@ DROP SCHEMA blogs CASCADE;
 
 <br />
 
-# Create Role
+# Roles
 
-PostgreSQl uses the concept of `roles` to represent user account. It doesn't use the concept of `users` like other database systems.
+`PostgreSQL` uses the concept of `roles` to represent `user` accounts. It doesn’t use the concept of `users` like other database systems.
+
+Typically, roles that can log in to the PostgreSQL server are called login `roles`. They are equivalent to `user` accounts in other database systems.
+
+When `roles` contain other roles, they are referred to as `group roles`.
+
+`Note:`
+
+PostgreSQL combined the users and groups into roles since version 8.1
+
+## CREATE ROLE statement
+
+Use `CREATE ROLE` statement.
+
+```sql
+-- syntax
+CREATE ROLE role_name
+```
+
+When you create a `role`, it is valid for all databases within the database server (or client).
+
+`Example:`
+
+```sql
+-- create role pkumar
+CREATE ROLE pkumar;
+```
+
+`To retrieve all roles:`
+
+```sql
+-- display all rolename
+SELECT rolname FROM pg_roles;
+
+-- In psql,
+-- you can use the \du command to show all roles that you create including the postgres role in the current PostgreSQL server:
+\du
+```
+
+`Note:`
+
+- The roles whose names start with `pg_` are system roles.
+- The `postgres` is a `superuser` role created by the `PostgreSQL` installer.
+
+<br />
+
+**`Login access to a role`**
+
+To allow the login access to a role in the PostgreSQL server, you need to add the `LOGIN` attribute to it.
+
+```sql
+-- syntax
+CREATE ROLE role_name
+WITH -- optional
+options;
+
+-- options
+CREATE ROLE role_name WITH
+    LOGIN -- Allow the role to loing in to db,
+    PASSWORD 'my_password' -- Set password for role,
+    VALID UNTIL '2025-12-31' -- Set expiration date.,
+    INHERIT -- Inherit privilege from other roles.,
+    CREATEDB -- Allow the role to create new db. ,
+    CREATEROLE -- Allow the role to create new role,
+    SUPERUSER -- Grants the role all privilege.
+    CONNECTION LIMIT connection_count;
+
+```
+
+`Create login role:`
+
+Creating `pkumar` role that has the login privilege and initial password;
+
+```sql
+CREATE ROLE pkumar
+LOGIN
+PASSWORD '12345';
+
+-- login in psql
+psql -U pkumar -d blogs
+```
+
+**`Create superuser role:`**
+
+The `superuser` role has all permissions within the `PostgreSQL` server.
+
+Notice that only a `superuser` role can create another `superuser` role.
+
+```sql
+-- syntax
+CREATE ROLE role_name
+SUPERUSER
+LOGIN
+PASSWORD 'user_defined_passwor';
+```
+
+**`Create roles with database creation permission:`**
+
+If you want to create roles that have the `database` creation `privilege`, you can use the `CREATEDB` attribute:
+
+```sql
+-- syntax
+CREATE ROLE role_name
+CREATEDB
+LOGIN
+PASSWORD 'user_defined_password';
+```
+
+**`Create roles with a validity period:`**
+
+To set a date and time after which the role’s password is no longer valid, you use the `VALID UNTIL` attribute:
+
+```sql
+-- syntax
+VALID UNTIL 'timestamp';
+
+-- example
+CREATE ROLE pkumar
+WITH
+CREATEDB -- createdb privilege
+LOGIN
+PASSWORD '1234' -- user defined password
+VALID UNTIL '2026-01-01'; -- valid only till '1 jan 26'
+
+```
+
+After one second tick in 2026, the password of pkumar is no longer valid.
+
+**`Create role with connection limit:`**
+
+To specify the number of concurrent connections a role can make, you use the `CONNECTION LIMIT` attribute:
+
+```sql
+-- syntax
+CONNECTION LIMIT connection_count;
+
+-- example
+CREATE ROLE pkumar
+WITH -- optional
+CREATEDB -- create db privilege
+LOGIN
+PASSWORD '12345' -- user defined password
+VALID UNTIL '2026-01-01' -- valid until 2026
+CONNECTION LIMIT 100 -- 100 concurrent connections
+;
+```
+
+# GRANT
+
+The `GRANT` statement to grant privileges on database object to a role.
+
+After creating a `role` with the `LOGIN` attribute, the role can `log in` to the `PostgreSQL` database server.
+
+However, it cannot do anything to the database objects like `tables`, `views`, `functions`, etc. For example, the `role` cannot select data from a `table` or `execute` a specific `function`.
+
+To allow a `role` to interact with `database` objects, you need to `grant` privileges on the database objects to the role using the `GRANT` statement.
+
+```sql
+-- syntax
+GRANT privilege_list | ALL
+ON table_name
+ON role_name;
+```
+
+- `Object Privileges:`
+
+  - `SELECT:` Read data from a table, view, or foreign table.
+  - `INSERT:` Insert new rows into a table.
+  - `UPDATE:` Modify existing rows in a table.
+  - `DELETE:` Delete rows from a table.
+  - `TRUNCATE:` Remove all rows from a table.
+  - `REFERENCES:` Create foreign key constraints referencing the table.
+  - `TRIGGER:` Create triggers on the table.
+  - `CREATE:` Create objects within the schema (e.g., tables, views, functions).
+  - `CONNECT:` Connect to the database.
+  - `TEMPORARY:` Create temporary tables.
+  - `EXECUTE:` Execute functions.
+  - `USAGE:` Grant the right to use a schema, sequence, language, or type.
+  - `SET:` Set session parameters.
+  - `ALTER:` SYSTEM: Alter system-wide parameters.
+  - `MAINTAIN:` Perform maintenance operations on the object.
+  - `USAGE:`(on a column): Use the column in expressions (e.g., in WHERE clauses).
+
+- `Schema Privileges:`
+
+  - `USAGE:` Use the schema and its objects.
+  - `CREATE:` Create objects within the schema.
+
+- `Database Privileges:`
+
+  - `CONNECT:` Connect to the database.
+  - `TEMPORARY:` Create temporary tables within the database.
+  - `CREATE:` Create objects within the database.
+
+- `Role Privileges:`
+
+  The name of the `role` itself: `Grants` membership in the role, allowing the grantee to inherit privileges from the role.
+
+- `Other Privileges:`
+
+  - `ALL PRIVILEGES:` Grant all available privileges for the object type.
+  - `WITH GRANT OPTION:` Allow the grantee to further grant the privilege to other roles.
+
+**`Grant SELECT, INSERT,UPDATE AND DELETE Privileges on the 'posts' table to the role 'pkumar'`**
+
+```sql
+GRANT
+SELECT, INSERT, UPDATE, DELETE -- privileges
+ON posts -- table
+TO pkumar;
+```
+
+**`Grant all privileges on a table to a role:`**
+
+```sql
+GRANT ALL
+ON posts
+TO pkumar;
+```
+
+**`Grant all privileges on all tables in a schema to a role:`**
+
+```sql
+GRANT ALL
+ON ALL TABLES
+IN SCHEMA "public"
+TO pkumar;
+```
+
+**`Grant SELECT privileges on all tables to a role:`**
+
+```sql
+GRANT SELECT
+ON ALL TABLES
+IN SCHEMA "public"
+TO pkumar;
+```
+
+# REVOKE
+
+The `REVOKE` statement revokes previously granted privileges on database objects from a `role`.
+
+```SQL
+-- syntax
+REVOKE privilege | ALL
+ON TABLE table_name | ALL TABLES IN SCHEMA schema_name
+FROM role_name;
+```
+
+**`Check privileges:`**
+
+```sql
+-- syntax
+SELECT grantee, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_name = 'table_name';
+```
+
+**`Grant ALL previlege to the role 'pkumar' on actor table:`**
+
+```sql
+GRANT ALL
+ON actor
+TO pkumar;
+```
+
+**`Revoke select previlege from a role:`**
+
+```sql
+-- revoking select permission from pkumar user
+REVOKE SELECT
+ON TABLE actor
+FROM pkumar;
+```
+
+**`Revoke all on the actor:`**
+
+```sql
+REVOKE ALL
+ON TABLE actor
+FROM pkumar
+```
+
+**`Revoke Privileges on All Objects of a Schema:`**
+
+```sql
+-- syntax
+REVOKE SELECT ON ALL TABLES IN SCHEMA schema_name FROM role_name;
+
+-- example
+REVOKE SELECT
+ON ALL TABLES IN SCHEMA 'public'
+FROM pkumar;
+```
+
+**`Revoke Privileges on Functions, Sequences:`**
+
+```sql
+-- syntax revoke on function
+REVOKE EXECUTE ON FUNCTION function_name(arg1_type, arg2_type) FROM role_name;
+
+-- syntax revoke on sequences
+REVOKE USAGE, SELECT ON SEQUENCE sequence_name FROM role_name;
+```
+
+**`Revoke Admin Privileges on a Database:`**
+
+```sql
+REVOKE CONNECT ON DATABASE database_name FROM role_name;
+```
+
+# Role membership
+
+In PostgreSQL, a group role is a role that serves as a container for other individual roles.
+
+**`Create a group role:`**
+
+```sql
+-- syntax
+CREATE ROLE group_role_name;
+
+-- create admin role
+CREATE ROLE admin;
+```
+
+**`Admin a role to a group role:`**
+
+```sql
+-- syntax
+GRANT group_role TO role;
+
+-- example
+GRANT
+admin -- group role
+TO
+pkumar; -- role
+
+-- If you don't want the role `pkumar` to inherit the privileges of its group roles, you can use NOINHERIT attribute;
+CREATE ROLE sales
+WITH LOGIN NOINHERIT
+PASSWORD '1234';
+```
+
+**`Remove a role to a group role:`**
+
+```sql
+-- syntax
+REVOKE group_role FROM role;
+
+-- example
+REVOKE admin FROM pkumar;
+```
+
+# PL/pgSQL
+
+It a procedural language allow you to add many procedural elements
+
+`such as:`
+
+- Control structures
+- Looping
+- Conditions
+- Complex computation
+
+to extend standard SQL.
+
+It allows you to develop complex function and stored procedures in PostgreSQL
+that may not be possible using pain SQL.
+
+<br />
+
+`Overview:`
+
+PL/pgSQL is procedural language for the PostgreSQL database system.
+
+PL/pgSQL allow you to extend the functionality of the
+PostgreSQL database server by creating server objects with complex logic.
+
+PL/pgSQL is designed to:
+
+- Create user-defined `functions, stored procedure`, and `triggers`.
+- Extend statndard `SQL` by adding `control structures` such as `if-else, case` and `loop` statements.
+- In herit all user-defined `functions, operators` and `types`.
+
+<br />
+
+`Advantage of using PL/pgSQL:`
+
+`SQL` is a query language that allows you to effectively manage data in the database.
+However, PostgreSQL only can execute `SQL` statements individually.
+
+It means that you have multiple statements, and you need to execute them one by one.
+
+For exmple:
+
+- First, send query to the PostgreSQL database server.
+- Next, wait for it to process.
+- Then, process the result set.
+- After that, do some calculations.
+- Finally, send another query to the PostgreSQL database server and repeat this process.
+
+This process incurs the interprocess computation and network overheads.
+
+To resolve this issue, `PostgreSQL` uses `PL/pgSQL`.
+
+PL/pgSQL wraps multiple statements in an objects and stores it on the PostgreSQL database server.
+
+Instead of sending multiple statements to the server one by one, you can send one statement to execute the object stored in the server.
+
+`This allows you to:`
+
+- Reduce the number of round trips between the application and the PostgreSQL database server.
+- Avoid transferring the immediate results between the application and the server.
+
+`Disadvandages:`
+
+- Slower in software development because PL/pgSQL requires specialized skills that many developers do not possess.
+- Difficult to manage versions and hard to debug.
+- May not be portable to other database management systems.
