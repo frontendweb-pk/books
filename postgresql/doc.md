@@ -1,3 +1,5 @@
+# PostgreSQL
+
 # RDBMS (What is it?)
 
 An `RDBMS` (Relational Database Management System) is a type of database management system that store data in a structured format using `table` (also known as `relation`).
@@ -41,6 +43,10 @@ RDBMSs are based on the principles of the `relational model` of data, introduced
 - `Scalability and Security:`
 
   RDBMSs provide mechanisms for security `(user roles, access control)` and scalability, allowing them to handle large amounts of data and users.
+
+# PostgreSQL
+
+Year of First Release
 
 # Internal architecture of PostgreSQL
 
