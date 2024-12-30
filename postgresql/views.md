@@ -21,6 +21,22 @@ PostgreSQL will rewrite the query against the view and its defining qeury, execu
 - `Query simplification:` Create compex queries as simple view.
 - `Improved redability:` Make complex queries more understandable.
 
+```sql
+-- list database views
+\dv -- display views
+
+-- or listing view using sql statments
+SELECT table_name, table_schema
+FROM information_schema.views
+WHERE table_schema NOT IN (
+    'information_schema','pg_catalog'
+)
+ORDER BY table_schem,table_name;
+
+-- list all materialized view
+SELECT * FROM pg_matviews;
+```
+
 ## Create views
 
 The `CREATE VIEW` statement used to create a new view.
@@ -257,3 +273,80 @@ In PostgreSQL, you can specify a scope of check.
   query
   WITH CASCADED CHECK OPTION;
   ```
+
+To change the scope of check for an existing view, you can use the `ALTER VIEW` statement.
+
+`Example:`
+
+```sql
+-- setting up a simple table and insert few data
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    department_id INT,
+    employee_type VARCHAR(20)
+       CHECK (employee_type IN ('FTE', 'Contractor'))
+);
+
+INSERT INTO employees (first_name, last_name, department_id, employee_type)
+VALUES
+    ('John', 'Doe', 1, 'FTE'),
+    ('Jane', 'Smith', 2, 'FTE'),
+    ('Bob', 'Johnson', 1, 'Contractor'),
+    ('Alice', 'Williams', 3, 'FTE'),
+    ('Charlie', 'Brown', 2, 'Contractor'),
+    ('Eva', 'Jones', 1, 'FTE'),
+    ('Frank', 'Miller', 3, 'FTE'),
+    ('Grace', 'Davis', 2, 'Contractor'),
+    ('Henry', 'Clark', 1, 'FTE'),
+    ('Ivy', 'Moore', 3, 'Contractor');
+
+-- create view
+CREATE OR REPLACE VIEW fte AS
+SELECT
+  id,
+  first_name,
+  last_name,
+  department_id,
+  employee_type
+FROM
+  employees
+WHERE
+  employee_type = 'FTE';
+
+-- insert a new row into the employees table via the fte view:
+
+INSERT INTO fte(first_name, last_name, department_id, employee_type)
+VALUES ('John', 'Smith', 1, 'Contractor');
+```
+
+It succeeds,
+
+The `issue` is that we can insert an `employee` with the type of `Contractor` into the employee table via the view that exposes the employee to the type of `FTE`.
+
+To ensure that we can insert only employees with the type `FTE` into the `employees` table via the `fte` view, you can use the `WITH CHECK OPTION`:
+
+```sql
+-- insert this new data
+INSERT INTO fte(first_name, last_name, department_id, employee_type)
+VALUES ('John', 'Smith', 1, 'Contractor');
+
+-- It will throw,
+-- ERROR:  new row violates check option for view "fte"
+```
+
+The reason is that the `employee_type` Contractor does not satisfy the condition defined in the defining query of the view:
+
+`employee_type = 'FTE';`
+
+But if you modify the row with the employee type `FTE`, it’ll be fine.
+
+```sql
+-- update
+UPDATE fte
+SET last_name = 'Doe'
+WHERE id = 2;
+```
+
+It works as expected.
