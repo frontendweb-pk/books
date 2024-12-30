@@ -350,3 +350,154 @@ WHERE id = 2;
 ```
 
 It works as expected.
+
+`Using WITH LOCAL CHECK OPTOION:`
+
+Recreate the `fte` view without using the `WITH CHECK OPTION`
+
+```sql
+-- recreate view
+CREATE OR REPLACE VIEW fte AS
+SELECT id,first_name,last_name,department_id,employee_type
+FROM employees
+WHERE employee_type='FTE';
+
+-- create new [fte_1] view based on [fte] view returns the employees of department 1, with the WITH LOCAL CHECK OPTION.
+CREATE OR REPLACE VIEW fte_1 AS
+SELECT id,first_name,last_name,department_id,employee_type
+FROM fte
+WHERE department_id=1
+WITH LOCAL CHECK OPTION;
+
+-- now retrieve the data
+SELECT * FROM fte_1;
+
+-- Since we use the WITH LOCAL CHECK OPTION, PostgreSQL checks only the fte_1
+
+-- now insert data using fte_1
+INSERT INTO fte_1(first_name, last_name, department_id, employee_type)
+VALUES ('Miller', 'Jackson', 1, 'Contractor');
+
+-- It succeeded. The reason is that the INSERT statement inserts a row with department 1 that satisfies the condition in the fte_1 view
+```
+
+`Using WITH CASCADE CHECK OPTOION:`
+
+Recreate the `fte_1` view with the `WITH CASCADE CHECK OPTION`
+
+```sql
+-- recreate fte_1
+CREATE OR REPLACE VIEW fte_1 AS
+SELECT id,first_name,last_name,department_id,employee_type
+FROM fte
+WHERE department_id=1
+WITH CASCADE CHECK OPTION;
+
+-- now retrieve the data
+SELECT * FROM fte_1;
+
+-- now insert data using fte_1
+INSERT INTO fte_1(first_name, last_name, department_id, employee_type)
+VALUES ('Miller', 'Jackson', 1, 'Contractor');
+
+-- Error:
+-- new row violates check option for view "fte".
+-- The WITH CASCADED CHECK OPTION instructs PostgreSQL to check the constraint on the fte_1 view and also its base view which is the fte view.
+```
+
+## Alter view
+
+The `ALTER VIEW` statement allow you to change various properties of view.
+
+If you want to change the view's defining query, use the `CREATE OR REPLACE VIEW` statement.
+
+```sql
+-- syntax
+ALTER VIEW view_name
+    [ RENAME TO new_view_name ]
+    [ OWNER TO new_owner ]
+    [ COLUMN old_column_name TO new_column_name ]
+    [ AS new_query ]
+    [ WITH [ LOCAL | CASCADED ] CHECK OPTION ]
+    [ [ NOT ] ENCRYPTED ]
+    [ [ NOT ] DEFINED ]
+```
+
+`Key options:`
+
+- `RENAME TO:` Changes the name of the view.
+- `OWNER TO:` Changes the owner of the view.
+- `COLUMN old_column_name TO new_column_name:` Renames a column within the view.
+- `AS new_query:` Modifies the underlying query that defines the view.
+- `WITH [ LOCAL | CASCADED ] CHECK OPTION:` Ensures that data inserted or updated through the view satisfies the WHERE clause of the view's definition.
+- `[ NOT ] ENCRYPTED:` Enables or disables encryption for the view.
+- `[ NOT ] DEFINED:` Marks the view as defined or undefined.
+
+  ```sql
+  -- full example
+  ALTER VIEW CustomerOrders
+      RENAME TO CustomerOrders_New
+      OWNER TO another_user
+      COLUMN OrderID TO OrderNumber
+      AS
+          SELECT CustomerID, OrderID AS OrderNumber
+          FROM Orders
+          WHERE OrderDate > '2023-01-01'
+      WITH CASCADED CHECK OPTION
+      ENCRYPTED;
+  ```
+
+`Renaming a view:`
+
+```sql
+ALTER VIEW IF EXISTS view_name
+RENAME TO new_view_name;
+```
+
+`Change the view option:`
+
+```sql
+ALTER VIEW IF EXISTS view_name
+SET (view_option_name [=view_option_value] [,...]);
+```
+
+The view_option_name can be:
+
+- `check_option:` change the check option. the valid value is `LOCAL` OR `CASCADE`.
+- `security_barrier:` change the security-barrier property of a view. The valid value is `true` or `false`.
+- `security_invoker:` change the security invoker of a view. the valid value is `true` or `false`.
+
+  ```sql
+  ALTER VIEW actor_film
+  SET (check_option = local)
+
+  -- psql: to view the change you can use
+  \d+ actor_film
+  ```
+
+`Changing the view column:`
+
+```sql
+-- syntax
+ALTER VIEW view_name
+RENAME [COLUMN] column_name TO new_column_name;
+
+-- example
+-- the following statement changes the title column of the film_rating view to film_title
+ALTER VIEW film_rating
+RENAME title TO film_title;
+```
+
+`Setting the new schema:`
+
+```sql
+-- syntax
+ALTER VIEW [ IF EXISTS ] view_name
+SET SCHEMA new_schema;
+
+-- example
+ALTER VIEW film_rating
+SET SCHEMA web;
+```
+
+## Materialized view
