@@ -1,5 +1,7 @@
 # PostgreSQL views
 
+In PostgreSQL views are `virtual` tables that represent data of the underlying tables.
+
 A views is a named query stored in a `PostgreSQL database server`.
 
 A view is defined based on `one` and `more` tables wich are known as `base table`, and the query that defines the view is referred to as a defining query.
@@ -501,3 +503,87 @@ SET SCHEMA web;
 ```
 
 ## Materialized view
+
+In PostgreSQL,
+
+Views are **virtual** table that represent data of underlying tables.
+
+PostgreSQL extends the view concept to the next level which allows view to store data physically. These views are called **materialized view**.
+
+Materialize view cache the result of an expensive query and allow you to refresh data periodically.
+
+The materialized views can be useful in many cases that require fast data access. Therefore, you often find them in data warehouses and business intelligence applications.
+
+**`Create materialized view:`**
+
+```sql
+-- syntax
+CREATE MATERIALIZED VIEW IF NOT EXISTS view_name
+AS
+query
+WITH [NO] DATA;
+```
+
+- `WITH DATA:` if you want to load data into the materialized view at the creation time.
+
+  ```sql
+  -- WITH DATA
+  CREATE MATERIALIZED VIEW staff_store_address AS
+  select staff_id,first_name,last_name, address,store.store_id from store
+  JOIN staff ON store.manager_staff_id=staff.staff_id
+  JOIN address ON address.address_id=staff.address_id
+  WITH DATA;
+
+  -- query data
+  SELECT * FROM staff_store_address;
+  ```
+
+- `WITH NO DATA:` the view is flagged as unreadable. It means that you cannot query data from the view until you load data into it.
+  In this case use `REFERESH MATERIALIZED VIEW` statement to load the data.
+
+  ```sql
+  -- WITH NO DATA
+  CREATE MATERIALIZED VIEW staff_store_address AS
+  select staff_id,first_name,last_name, address,store.store_id from store
+  JOIN staff ON store.manager_staff_id=staff.staff_id
+  JOIN address ON address.address_id=staff.address_id
+  WITH NO DATA;
+
+  -- query data
+  SELECT * FROM staff_store_address;
+  ```
+
+  It will not display any data. you need to refresh to load data.
+
+`Refresh data for materialized view:`
+
+To load data into materialized view, you use the `REFRESH MATERIALIZED VIEW` statement.
+
+```sql
+REFRESH MATERIALIZED VIEW view_name;
+```
+
+When you refresh data for a materialized view, PostgreSQL locks the underlying tables. Consequently, you will not be able to retrieve data from underlying tables while data is loading into the view.
+
+To avoid this, you can use the `CONCURRENTLY` option.
+
+```sql
+REFRESH MATERIALIZED VIEW CONCURRENTLY view_name;
+```
+
+With the `CONCURRENTLY` option, PostgreSQL creates a temporary updated version of the materialized view, compares two versions, and performs `INSERT` and `UPDATE` only the differences.
+
+However, to refresh it with `CONCURRENTLY` option, you need to create a `UNIQUE` index for the view first.
+
+```sql
+-- create unique index on staff-store_address view
+CREATE UNIQUE INDEX staff_store_address_idx
+ON staff_store_address (address);
+```
+
+`Drop materialized view:`
+
+```sql
+-- syntax
+DROP MATERIALIZED VIEW view_name;
+```
