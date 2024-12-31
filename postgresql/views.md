@@ -2,15 +2,15 @@
 
 In PostgreSQL views are `virtual` tables that represent data of the underlying tables.
 
-A views is a named query stored in a `PostgreSQL database server`.
+A view is a named query stored in a `PostgreSQL database server`.
 
-A view is defined based on `one` and `more` tables wich are known as `base table`, and the query that defines the view is referred to as a defining query.
+A view is defined based on `one` and `more` tables which are known as `base tables`, and the query that defines the view is referred to as a defining query.
 
-After creating view you can query data from it as you would from a regular table.
+After creating a view you can query data from it as you would from a regular table.
 
-`Behind the schenes:`
+`Behind the scenes:`
 
-PostgreSQL will rewrite the query against the view and its defining qeury, executing it to retrieve data from the base tables.
+PostgreSQL will rewrite the query against the view and its defining query, executing it to retrieve data from the base tables.
 
 - A view is a virtual table that doesn't store data (except materialized view).
 - It is a saved SQL query that defines a result set.
@@ -20,28 +20,28 @@ PostgreSQL will rewrite the query against the view and its defining qeury, execu
 - `Data abstraction:` Hide the complexity of underlying tables.
 - `Data security:` Restrict access to specific rows and columns.
 - `Data independence:` Changes to underlying tables don't always affect view definitions.
-- `Query simplification:` Create compex queries as simple view.
-- `Improved redability:` Make complex queries more understandable.
+- `Query simplification:` Create complex queries as simple view.
+- `Improved readability:` Make complex queries more understandable.
 
 ```sql
 -- list database views
 \dv -- display views
 
--- or listing view using sql statments
+-- or listing views using SQL statements
 SELECT table_name, table_schema
 FROM information_schema.views
 WHERE table_schema NOT IN (
     'information_schema','pg_catalog'
 )
-ORDER BY table_schem,table_name;
+ORDER BY table_schema,table_name;
 
--- list all materialized view
+-- list all materialized views
 SELECT * FROM pg_matviews;
 ```
 
 ## Create views
 
-The `CREATE VIEW` statement used to create a new view.
+The `CREATE VIEW` statement is used to create a new view.
 
 ```sql
 -- display the view info in psql
@@ -209,7 +209,7 @@ SELECT * FROM cities;
 `Create an updatable views:`
 
 ```sql
--- creat [city_us] view
+-- create [city_us] view
 CREATE VIEW city_us
 AS
     SELECT *
@@ -418,7 +418,7 @@ If you want to change the view's defining query, use the `CREATE OR REPLACE VIEW
 ALTER VIEW view_name
     [ RENAME TO new_view_name ]
     [ OWNER TO new_owner ]
-    [ COLUMN old_column_name TO new_column_name ]
+    [ RENAME COLUMN old_column_name TO new_column_name ]
     [ AS new_query ]
     [ WITH [ LOCAL | CASCADED ] CHECK OPTION ]
     [ [ NOT ] ENCRYPTED ]
