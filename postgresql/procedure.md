@@ -90,3 +90,13 @@ call transfer_balance(
 ```
 
 ## Drop procedure
+
+`DROP PROCEDURE` statement deletes one or more stored procedure from a database.
+
+```sql
+-- syntax
+drop procedure [if exists] procedure_name (argument_list)
+[cascade | restrict]
+
+
+```
