@@ -69,3 +69,7 @@ await sequelize.close();
 `Note:`
 
 Once you called `sequelize.close()`
+
+## Models
+
+The models are the essence of sequelize, A model is an abstraction that represents a table in database.
