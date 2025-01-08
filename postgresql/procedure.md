@@ -97,6 +97,39 @@ call transfer_balance(
 -- syntax
 drop procedure [if exists] procedure_name (argument_list)
 [cascade | restrict]
+```
 
+## INOUT Parameter
+
+Sometime you may want to return values from **stored procedures**. To achieve this, you can use the **INOUT** parameters.
+
+```sql
+--syntax
+create or replace procedure procedure_name(intout param_list)
+language plpgsql
+AS $$
+declare
+    -- variables;
+begin
+    -- stored procedure
+end;
+$$;
+
+-- You use the [call] statement without providing the [INOUT] parameters:
+call procedure_name();
+
+
+-- If you call a stored procedure with [INOUT] parameters in an anonymous block, you need to pass arguments to the stored procedure call as follows:
+do
+$$
+   declare
+      v_name1 type;
+      v_name2 type;
+   begin
+      -- call the stored procedure with inout parameters
+      call sp_name(v_name1, v_name2);
+      -- process v_name1, v_name2
+   end;
+$$;
 
 ```
