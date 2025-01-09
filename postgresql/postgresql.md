@@ -85,3 +85,81 @@ PostgreSQL provide two statements for create user-defined type.
   DROP DOMAIN zipcode;
   DROP DOMAIN validate;
   ```
+
+- **CREATE TYPE:**
+
+  `CREATE TYPE` Statemet allow you to create a data type for use in the current database. the user who defines the type become the `owner`.
+
+  There are five forms of `CREATE TYPE`,
+
+  - A composite type.
+  - A enum type.
+  - A range type.
+  - A base type.
+  - A shell type.
+
+- `A composite type:`
+
+  It is a first form of `CREATE TYPE`, The composite type specified by a list of attribute names and data types.
+
+  To create a coposite type you must have 'USAGE' privilege on all attributes.
+
+  ```sql
+  -- syntax
+  CREATE TYPE film_info AS (film_title varchar, film_release_year int);
+
+  -- exmaple
+  CREATE FUNCTION get_film()
+  RETURNS SETOF film_info
+  AS $$
+      SELECT title, release_year::int FROM film;
+  $$ LANGUAGE SQL;
+
+  -- Alter
+  -- Rename
+  ALTER TYPE film_info RENAME TO new_name;
+  -- Add attribute
+  ALTER TYPE film_info ADD ATTRIBUTE film_rental_rate decimal(4,2);
+  -- Drop attribute
+  ALTER TYPE film_info DROP ATTRIBUTE film_release_year;
+  -- Change owner
+  ALTER TYPE film_info OWNER TO new_name;
+  -- Change schema
+  ALTER TYPE film_info SET SCHEMA new_schema;
+  -- Rename attribute
+  ALTER TYPE film_info RENAME ATTRIBUTE film_rental_rate TO 'rental_reate';
+  -- Cange type
+  ALTER TYPE film_info ALTER ATTRIBUTE SET TYPE data_type [COLLATE collation] [CASCATE | RESTRICT] -- COLLATE "en_US" or any
+  ```
+
+- ```sql
+    -- syntax
+    CREATE TYPE type_name AS (
+    INPUT = input_function,
+    OUTPUT = output_function
+    [ , RECEIVE = receive_function ]
+    [ , SEND = send_function ]
+    [ , TYPMOD_IN = type_modifier_input_function ]
+    [ , TYPMOD_OUT = type_modifier_output_function ]
+    [ , ANALYZE = analyze_function ]
+    [ , SUBSCRIPT = subscript_function ]
+    [ , INTERNALLENGTH = { internallength | VARIABLE } ]
+    [ , PASSEDBYVALUE ]
+    [ , ALIGNMENT = alignment ]
+    [ , STORAGE = storage ]
+    [ , LIKE = like_type ]
+    [ , CATEGORY = category ]
+    [ , PREFERRED = preferred ]
+    [ , DEFAULT = default ]
+    [ , ELEMENT = element ]
+    [ , DELIMITER = delimiter ]
+    [ , COLLATABLE = collatable ]
+  )
+
+    -- example
+    CREATE TYPE film_info AS (
+        film_id int,
+        film_tile varchar,
+        film_release_year int
+    );
+  ```
