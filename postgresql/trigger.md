@@ -44,7 +44,7 @@ ORDER BY
 
 To create a new trigger.
 
-- First, Create a trigger function using `CREATE TRIGGER`.
+- First, Create a trigger function using `CREATE FUNCION`.
 - Second, Bind the trigger to a table by using `CREATE TRIGGER`.
 
 ```sql
@@ -75,3 +75,96 @@ CREATE FUNCTION
 - `TG_ARGV:` Array of arguments from the `CREATE TRIGGER` statement.
 
 These variables provide essential information within the trigger function's execution context, allowing you to perform actions based on the specific event and its details.
+
+```sql
+-- DEPARTMENT TABLE
+CREATE TABLE DEPARTMENT(
+ dep_id SERIAL PRIMARY KEY,
+ name VARCHAR(100) NOT NULL check(name <> ''),
+ created_at TIMESTAMP not null default CURRENT_TIMESTAMP
+);
+
+CREATE OR REPLACE FUNCTION check_name()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+	IF LENGTH(NEW.NAME) < 2 THEN
+		RAISE EXCEPTION 'name must be 2 character long';
+	END IF;
+
+	RETURN NEW;
+END;
+$$;
+CREATE TRIGGER department_check_name_trigger
+BEFORE INSERT OR UPDATE
+ON department
+FOR EACH ROW
+EXECUTE PROCEDURE check_name();
+
+CREATE TABLE EMPLOYEES(
+emp_id SERIAL PRIMARY KEY,
+name VARCHAR(100) NOT NULL,
+dep_id INTEGER REFERENCES department (dep_id) ON DELETE CASCADE,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER employees_name_check_trigger
+BEFORE INSERT OR UPDATE
+on EMPLOYEES
+FOR EACH ROW
+EXECUTE PROCEDURE check_name();
+
+-- view
+CREATE VIEW department_employees
+AS
+	SELECT d.name as dep_name, e.name
+	FROM department d
+	JOIN employees e ON e.dep_id=d.dep_id;
+
+CREATE OR REPLACE FUNCTION department_employees_fun()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+	DECLARE
+		d_id int;
+
+	BEGIN
+		RAISE NOTICE 'perform % operation on department_employees view', TG_OP;
+		RAISE NOTICE 'trigger name: %',TG_NAME;
+		RAISE NOTICE 'trigger time: %',TG_WHEN;
+		RAISE NOTICE 'trigger perform on: % table',TG_TABLE_NAME;
+
+		IF TG_OP = 'INSERT' THEN
+
+		    if NEW.dep_name ~* '^[a-z]{1}' then
+				INSERT INTO department(name) VALUES(NEW.dep_name)
+				RETURNING dep_id into d_id;
+			ELSE
+				SELECT NEW.dep_name into d_id;
+			end if;
+
+			INSERT INTO EMPLOYEES(name,dep_id)
+			VALUES(NEW.name,d_id);
+
+			RETURN NEW;
+		ELSIF TG_OP = 'UPDATE' THEN
+			RETURN NEW;
+		ELSIF TG_OP = 'DELETE' THEN
+			RETURN OLD;
+		END IF;
+	END;
+$$;
+
+CREATE TRIGGER department_employees_fun_trigger
+INSTEAD OF INSERT OR UPDATE OR DELETE
+ON department_employees
+FOR EACH ROW
+EXECUTE PROCEDURE department_employees_fun();
+
+DROP TRIGGER department_employees_fun_trigger ON EMPLOYEES;
+
+INSERT INTO department_employees(name,dep_name) values('Deepak kumar',4);
+
+select * from department;
+```
